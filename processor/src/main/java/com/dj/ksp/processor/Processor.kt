@@ -1,7 +1,6 @@
 package com.dj.ksp.processor
 
 import com.dj.testannotation.RepositoryAnnotation
-import com.dj.testannotation.TestAnnotation
 import com.dj.testannotation.ViewModelAnnotation
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
@@ -9,9 +8,7 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.validate
 import kotlin.reflect.KClass
 
 internal class Processor(
@@ -24,9 +21,6 @@ internal class Processor(
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-
-        val hackedFunctions: Sequence<KSFunctionDeclaration> =
-            resolver.findAnnotations(TestAnnotation::class)
 
         val viewModels: Sequence<KSClassDeclaration> =
             resolver.findClassAnnotations(ViewModelAnnotation::class)
@@ -47,22 +41,11 @@ internal class Processor(
 //            throw IllegalStateException("Repository cannot be injected")
 //        }
 
-        if (!hackedFunctions.iterator().hasNext()) return emptyList()
-
-        val sourceFiles = hackedFunctions.mapNotNull { it.containingFile }
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
-
             append("fun printHackFunction() = \"\"\"")
             newLine()
-            hackedFunctions
-                .mapNotNull {
-                    it.qualifiedName?.asString()
-                }.forEach {
-                    append(it)
-                    newLine()
-                }
             append("vm count " + viewModels.count())
             newLine()
             append("repositories count " + repositories.count())
@@ -76,8 +59,8 @@ internal class Processor(
 
         environment.logger.warn("PRINTED: \n\n$fileText")
 
-        createFileWithText(sourceFiles, fileText)
-        return (hackedFunctions).filterNot { it.validate() }.toList()
+        createFileWithText(fileText)
+        return emptyList()
     }
 
     private fun Resolver.findAnnotations(
@@ -95,13 +78,11 @@ internal class Processor(
         .filterIsInstance<KSClassDeclaration>()
 
     private fun createFileWithText(
-        sourceFiles: Sequence<KSFile>,
         fileText: String,
     ) {
         val file = environment.codeGenerator.createNewFile(
             Dependencies(
-                false,
-                *sourceFiles.toList().toTypedArray(),
+                false
             ),
             GENERATED_PACKAGE,
             GENERATED_FILE_NAME
