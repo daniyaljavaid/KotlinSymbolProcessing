@@ -1,15 +1,15 @@
 package com.dj.ksp.processor
 
+import com.dj.ksp.extensions.createFileWithText
+import com.dj.ksp.extensions.findClassAnnotations
+import com.dj.ksp.extensions.newLine
 import com.dj.testannotation.RepositoryAnnotation
 import com.dj.testannotation.ViewModelAnnotation
-import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import kotlin.reflect.KClass
 
 internal class Processor(
     private val environment: SymbolProcessorEnvironment,
@@ -52,48 +52,13 @@ internal class Processor(
             newLine()
             append("vmParams $vmParams")
             newLine()
-//            append("ktClass $ktClass")
             append("\"\"\"")
             newLine()
         }
 
         environment.logger.warn("PRINTED: \n\n$fileText")
-
-        createFileWithText(fileText)
+        environment.createFileWithText(fileText)
         return emptyList()
     }
 
-    private fun Resolver.findAnnotations(
-        kClass: KClass<*>,
-    ) = getSymbolsWithAnnotation(
-        kClass.qualifiedName.toString()
-    )
-        .filterIsInstance<KSFunctionDeclaration>()
-
-    private fun Resolver.findClassAnnotations(
-        kClass: KClass<*>,
-    ) = getSymbolsWithAnnotation(
-        kClass.qualifiedName.toString()
-    )
-        .filterIsInstance<KSClassDeclaration>()
-
-    private fun createFileWithText(
-        fileText: String,
-    ) {
-        val file = environment.codeGenerator.createNewFile(
-            Dependencies(
-                false
-            ),
-            GENERATED_PACKAGE,
-            GENERATED_FILE_NAME
-        )
-
-        file.write(fileText.toByteArray())
-    }
-
-    private fun StringBuilder.newLine(count: Int = 1) {
-        repeat(count) {
-            append("\n")
-        }
-    }
 }
