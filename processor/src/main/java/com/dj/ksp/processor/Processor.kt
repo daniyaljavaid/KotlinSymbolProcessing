@@ -11,19 +11,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
-import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.lazy.LazyDeclarationResolver
-import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
-import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyTypeParameterDescriptor
 import kotlin.reflect.KClass
 
 internal class Processor(
@@ -36,6 +24,7 @@ internal class Processor(
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+
         val hackedFunctions: Sequence<KSFunctionDeclaration> =
             resolver.findAnnotations(TestAnnotation::class)
 
@@ -44,6 +33,8 @@ internal class Processor(
 
         val repositories: Sequence<KSClassDeclaration> =
             resolver.findClassAnnotations(RepositoryAnnotation::class)
+
+        if (!viewModels.iterator().hasNext()) return emptyList()
         val viewModel = viewModels.iterator().next()
         val vmParams =
             viewModel.primaryConstructor?.parameters?.get(0)!!.type.resolve().declaration.annotations.iterator()
@@ -51,11 +42,10 @@ internal class Processor(
         val declaration =
             viewModel.primaryConstructor?.parameters?.get(0)!!.type.resolve().declaration
 
-        val classDec = convertKtClassToKSDeclaration(RepositoryAnnotation::class)
 
-        if (declaration!!.packageName == classDec!!.packageName) {
-            throw IllegalStateException("Repository cannot be injected")
-        }
+//        if (declaration!!.packageName == classDec!!.packageName) {
+//            throw IllegalStateException("Repository cannot be injected")
+//        }
 
         if (!hackedFunctions.iterator().hasNext()) return emptyList()
 
@@ -79,7 +69,7 @@ internal class Processor(
             newLine()
             append("vmParams $vmParams")
             newLine()
-            append("ktClass $ktClass")
+//            append("ktClass $ktClass")
             append("\"\"\"")
             newLine()
         }
@@ -88,12 +78,6 @@ internal class Processor(
 
         createFileWithText(sourceFiles, fileText)
         return (hackedFunctions).filterNot { it.validate() }.toList()
-    }
-
-    fun convertKtClassToKSDeclaration(ktClass: KtClass): KSClassDeclaration? {
-        val resolver: Resolver = environment.resolver
-        val declaration = resolver.getDeclaration(ktClass) ?: return null
-        return declaration as? KSClassDeclaration
     }
 
     private fun Resolver.findAnnotations(
