@@ -46,11 +46,7 @@ internal class Processor(
             newLine(2)
             append("fun printHackFunction() = \"\"\"")
             newLine()
-            append("vm count " + viewModels.count())
-            newLine()
-            append("repositories count " + repositories.count())
-            newLine()
-            append("vmParams $vmParams")
+            append("all repositories " + getAllRepositories(repositories))
             newLine()
             append("\"\"\"")
             newLine()
@@ -59,6 +55,14 @@ internal class Processor(
         environment.logger.warn("PRINTED: \n\n$fileText")
         environment.createFileWithText(fileText)
         return emptyList()
+    }
+
+    private fun getAllRepositories(repositories: Sequence<KSClassDeclaration>): String {
+        return repositories.map {
+            it.annotations.map {
+                it.annotationType
+            }.toList()
+        }.toList().toString()
     }
 
 }
