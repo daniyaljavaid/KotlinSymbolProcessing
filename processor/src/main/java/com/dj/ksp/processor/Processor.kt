@@ -46,7 +46,19 @@ internal class Processor(
             newLine(2)
             append("fun printHackFunction() = \"\"\"")
             newLine()
-            append("all repositories " + getAllRepositories(repositories))
+            append(
+                "all repositories " + getAnnotatedClasses(
+                    resolver,
+                    RepositoryAnnotation::class.java.canonicalName
+                )
+            )
+            newLine()
+            append(
+                "all viewmodels " + getAnnotatedClasses(
+                    resolver,
+                    ViewModelAnnotation::class.java.canonicalName
+                )
+            )
             newLine()
             append("\"\"\"")
             newLine()
@@ -57,12 +69,21 @@ internal class Processor(
         return emptyList()
     }
 
-    private fun getAllRepositories(repositories: Sequence<KSClassDeclaration>): String {
-        return repositories.map {
-            it.annotations.map {
-                it.annotationType
-            }.toList()
-        }.toList().toString()
+    private fun getAnnotatedClasses(
+        resolver: Resolver,
+        annotationName: String
+    ): MutableList<KSAnnotated> {
+        val annotatedClasses = mutableListOf<KSAnnotated>()
+
+        val annotatedSymbols =
+            resolver.getSymbolsWithAnnotation(annotationName)
+        for (symbol in annotatedSymbols) {
+            if (symbol is KSClassDeclaration) {
+                annotatedClasses.add(symbol)
+            }
+        }
+
+        return annotatedClasses
     }
 
 }
