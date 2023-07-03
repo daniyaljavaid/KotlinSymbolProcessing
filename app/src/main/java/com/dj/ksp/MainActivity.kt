@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 @ViewModelAnnotation
-class ViewModel constructor(repository: Repository) {
+class ViewModel constructor(repository: Repository, randomString: String) {
 
 }
 

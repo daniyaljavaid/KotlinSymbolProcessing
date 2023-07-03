@@ -24,7 +24,9 @@ internal class Processor(
             resolver, ViewModelAnnotation::class.java.canonicalName
         )
         val viewModelParams = viewModelAnnotatedClasses.map {
-            getConstructorParameters(it).toString()
+            getConstructorParameters(it).map {
+                it.type
+            }
         }
 
         val fileText = buildString {
