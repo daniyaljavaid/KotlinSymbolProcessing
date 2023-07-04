@@ -23,13 +23,16 @@ internal class Processor(
         val viewModelAnnotatedClasses = getAnnotatedClasses(
             resolver, ViewModelAnnotation::class.java.canonicalName
         )
+
         val viewModelParams = viewModelAnnotatedClasses.map {
             getConstructorParameters(it).map {
-                Pair(it.type, it.annotations.map {
+                val parameterClass = getClassFromParameter(it)
+                parameterClass?.annotations?.map {
                     it.shortName.asString()
-                }.toList())
+                }?.toList()
             }
         }
+
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
@@ -54,6 +57,11 @@ internal class Processor(
             environment.logger.warn("Exception")
         }
         return emptyList()
+    }
+
+    private fun getClassFromParameter(parameter: KSValueParameter): KSClassDeclaration? {
+        val parameterType = parameter.type.resolve()
+        return parameterType.declaration as? KSClassDeclaration
     }
 
     private fun getAnnotatedClasses(
