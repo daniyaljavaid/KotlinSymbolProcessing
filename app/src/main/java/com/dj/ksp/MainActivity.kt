@@ -16,21 +16,18 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-@ViewModelAnnotation
-class ViewModel constructor(repository: Repository, randomString: String) {
+class ViewModel constructor(repository: Repository, randomString: String) : IViewModel {
 
 }
 
-@ViewModelAnnotation
-class ViewModel2 constructor(repository: Repository, randomInt: Int) {
+class ViewModel2 constructor(repository: Repository, randomInt: Int) : IViewModel {
 
 }
 
 @RepositoryAnnotation
-interface Repository {
+interface Repository
 
-}
+@ViewModelAnnotation
+interface IViewModel
 
-class RepositoryImpl : Repository {
-
-}
+class RepositoryImpl : Repository
