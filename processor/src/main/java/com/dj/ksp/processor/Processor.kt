@@ -39,7 +39,7 @@ internal class Processor(
             append("fun printHackFunction() = \"\"\"")
             newLine()
             append(
-                "all viewmodel classes $viewModelAnnotatedClasses"
+                "all viewmodel classes/interfaces $viewModelAnnotatedClasses"
             )
             newLine()
             append(
