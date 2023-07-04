@@ -21,6 +21,11 @@ class ViewModel constructor(repository: Repository, randomString: String) {
 
 }
 
+@ViewModelAnnotation
+class ViewModel2 constructor(repository: Repository, randomInt: Int) {
+
+}
+
 @RepositoryAnnotation
 interface Repository {
 

@@ -25,10 +25,11 @@ internal class Processor(
         )
         val viewModelParams = viewModelAnnotatedClasses.map {
             getConstructorParameters(it).map {
-                it.type
+                Pair(it.type, it.annotations.map {
+                    it.shortName.asString()
+                }.toList())
             }
         }
-
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
