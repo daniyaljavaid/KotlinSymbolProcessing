@@ -2,6 +2,7 @@ package com.dj.ksp.processor
 
 import com.dj.ksp.extensions.createFileWithText
 import com.dj.ksp.extensions.newLine
+import com.dj.testannotation.RepositoryAnnotation
 import com.dj.testannotation.ViewModelAnnotation
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -47,14 +48,22 @@ internal class Processor(
             }.toSet()).isNotEmpty()
         }
 
-        // step 3 & 4 - For each Implementation class, access it’s constructor parameters
-        //For each parameter/class, get it’s annotation.
-        val classParams = implementationClasses.map {
-            getConstructorParameters(it).map {
+        /* step 3 & 4 - For each Implementation class, access it’s constructor parameters
+        For each parameter/class, get it’s annotation. */
+
+        implementationClasses.forEach {implClass ->
+            // class constructor params
+            getConstructorParameters(implClass).forEach {
+
+                // convert params to KSClass
                 val parameterClass = getClassFromParameter(it)
-                parameterClass?.annotations?.map {
-                    it.shortName.asString()
-                }?.toList()
+
+                // validation
+                parameterClass?.annotations?.forEach {
+                    if (it.shortName.asString() != RepositoryAnnotation::class.simpleName) {
+                        throw java.lang.Exception("Verify $implClass parameters")
+                    }
+                }
             }
         }
 
@@ -66,10 +75,6 @@ internal class Processor(
             newLine()
             append(
                 "all viewmodel classes/interfaces $viewModelAnnotatedClasses"
-            )
-            newLine()
-            append(
-                "viewmodel params $classParams"
             )
             newLine()
             append("\"\"\"")
