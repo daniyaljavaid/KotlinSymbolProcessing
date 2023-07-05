@@ -10,7 +10,7 @@ class ViewModel3 constructor(repository: Repository, randomDouble: Double) : IVi
 
 }
 
-class ViewModel constructor(repository: Repository, randomString: String) : IViewModel {
+class ViewModel constructor(repository: Repository, randomString: String, viewModel3: ViewModel3) : IViewModel {
 
 }
 

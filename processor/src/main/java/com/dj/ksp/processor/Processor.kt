@@ -3,20 +3,12 @@ package com.dj.ksp.processor
 import com.dj.ksp.extensions.createFileWithText
 import com.dj.ksp.extensions.newLine
 import com.dj.testannotation.ViewModelAnnotation
-import com.google.devtools.ksp.getDeclaredFunctions
-import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.KSNode
-import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
-import com.google.devtools.ksp.symbol.KSVisitorVoid
-import com.google.devtools.ksp.visitor.KSDefaultVisitor
 
 internal class Processor(
     private val environment: SymbolProcessorEnvironment,
@@ -55,6 +47,18 @@ internal class Processor(
             }.toSet()).isNotEmpty()
         }
 
+        // step 3 & 4 - For each Implementation class, access it’s constructor parameters
+        //For each parameter/class, get it’s annotation.
+        val classParams = implementationClasses.map {
+            getConstructorParameters(it).map {
+                val parameterClass = getClassFromParameter(it)
+                parameterClass?.annotations?.map {
+                    it.shortName.asString()
+                }?.toList()
+            }
+        }
+
+
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
@@ -65,7 +69,7 @@ internal class Processor(
             )
             newLine()
             append(
-                "viewmodel params"
+                "viewmodel params $classParams"
             )
             newLine()
             append("\"\"\"")
