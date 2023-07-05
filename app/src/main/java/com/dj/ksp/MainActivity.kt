@@ -15,19 +15,3 @@ class MainActivity : AppCompatActivity() {
         Log.e("Log--->", printHackFunction())
     }
 }
-
-class ViewModel constructor(repository: Repository, randomString: String) : IViewModel {
-
-}
-
-class ViewModel2 constructor(repository: Repository, randomInt: Int) : IViewModel {
-
-}
-
-@RepositoryAnnotation
-interface Repository
-
-@ViewModelAnnotation
-interface IViewModel
-
-class RepositoryImpl : Repository

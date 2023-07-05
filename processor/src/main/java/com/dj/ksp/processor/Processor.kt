@@ -3,12 +3,20 @@ package com.dj.ksp.processor
 import com.dj.ksp.extensions.createFileWithText
 import com.dj.ksp.extensions.newLine
 import com.dj.testannotation.ViewModelAnnotation
+import com.google.devtools.ksp.getDeclaredFunctions
+import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSNode
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
+import com.google.devtools.ksp.symbol.KSVisitorVoid
+import com.google.devtools.ksp.visitor.KSDefaultVisitor
 
 internal class Processor(
     private val environment: SymbolProcessorEnvironment,
@@ -20,17 +28,31 @@ internal class Processor(
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+
+        //step1 - Find interfaces annotated with @CustomAnnotation
         val viewModelAnnotatedClasses = getAnnotatedClasses(
             resolver, ViewModelAnnotation::class.java.canonicalName
         )
 
-        val viewModelParams = viewModelAnnotatedClasses.map {
-            getConstructorParameters(it).map {
-                val parameterClass = getClassFromParameter(it)
-                parameterClass?.annotations?.map {
-                    it.shortName.asString()
-                }?.toList()
-            }
+        //step 2 - For each interface, find Implementation classes
+        val files = resolver.getAllFiles().toList()
+
+        val declarations = mutableListOf<KSClassDeclaration>()
+
+        files.map {
+            it.declarations
+        }.map {
+            it.toList().filterIsInstance<KSClassDeclaration>()
+        }.forEach {
+            declarations.addAll(it)
+        }
+
+        val implementationClasses = declarations.filter {
+            it.superTypes.map {
+                it.toString()
+            }.toList().intersect(viewModelAnnotatedClasses.map {
+                it.toString()
+            }.toSet()).isNotEmpty()
         }
 
         val fileText = buildString {
@@ -43,7 +65,7 @@ internal class Processor(
             )
             newLine()
             append(
-                "viewmodel params $viewModelParams"
+                "viewmodel params"
             )
             newLine()
             append("\"\"\"")
