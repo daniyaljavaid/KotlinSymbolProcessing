@@ -3,10 +3,11 @@ package com.dj.ksp.processor
 import com.dj.ksp.extensions.createFileWithText
 import com.dj.ksp.extensions.newLine
 import com.dj.testannotation.RepositoryAnnotation
-import com.dj.testannotation.ViewModelAnnotation
+import com.dj.testannotation.UseCaseAnnotation
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -24,48 +25,37 @@ internal class Processor(
 
         //step1 - Find interfaces annotated with @CustomAnnotation
         val viewModelAnnotatedClasses = getAnnotatedClasses(
-            resolver, ViewModelAnnotation::class.java.canonicalName
+            resolver, UseCaseAnnotation::class.java.canonicalName
         )
 
-        //step 2 - For each interface, find Implementation classes
-        val files = resolver.getAllFiles().toList()
+        if (viewModelAnnotatedClasses.any { it.classKind == ClassKind.INTERFACE }) {
+            validator(viewModelAnnotatedClasses)
+        } else {
 
-        val declarations = mutableListOf<KSClassDeclaration>()
+            //step 2 - For each interface, find Implementation classes
+            val files = resolver.getAllFiles().toList()
 
-        files.map {
-            it.declarations
-        }.map {
-            it.toList().filterIsInstance<KSClassDeclaration>()
-        }.forEach {
-            declarations.addAll(it)
-        }
+            val declarations = mutableListOf<KSClassDeclaration>()
 
-        val implementationClasses = declarations.filter {
-            it.superTypes.map {
-                it.toString()
-            }.toList().intersect(viewModelAnnotatedClasses.map {
-                it.toString()
-            }.toSet()).isNotEmpty()
-        }
-
-
-        // step 3 - For each Implementation class, access it’s constructor parameters
-        implementationClasses.forEach { implClass ->
-            getConstructorParameters(implClass).forEach {
-
-                // step 4 - For each parameter/class, get it’s annotation
-                val parameterClass = getClassFromParameter(it)
-
-                // step 5 - Validate according to respective layer
-                parameterClass?.annotations?.forEach {
-                    if (it.shortName.asString() != RepositoryAnnotation::class.simpleName) {
-                        throw java.lang.Exception("Verify $implClass parameters")
-                    }
-                }
+            files.map {
+                it.declarations
+            }.map {
+                it.toList().filterIsInstance<KSClassDeclaration>()
+            }.forEach {
+                declarations.addAll(it)
             }
+
+            val implementationClasses = declarations.filter {
+                it.superTypes.map {
+                    it.toString()
+                }.toList().intersect(viewModelAnnotatedClasses.map {
+                    it.toString()
+                }.toSet()).isNotEmpty()
+            }
+
+
+            validator(implementationClasses)
         }
-
-
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
@@ -75,9 +65,9 @@ internal class Processor(
                 "all viewmodel classes/interfaces $viewModelAnnotatedClasses"
             )
             newLine()
-            append(
-                "all viewmodel implementations $implementationClasses"
-            )
+//            append(
+////                "all viewmodel implementations $implementationClasses"
+//            )
             newLine()
             append("\"\"\"")
             newLine()
@@ -115,6 +105,24 @@ internal class Processor(
     private fun getConstructorParameters(classDeclaration: KSClassDeclaration): List<KSValueParameter> {
         val constructor = classDeclaration.primaryConstructor ?: return emptyList()
         return constructor.parameters
+    }
+
+    private fun validator(implementationClasses: List<KSClassDeclaration>) {
+        // step 3 - For each Implementation class, access it’s constructor parameters
+        implementationClasses.forEach { implClass ->
+            getConstructorParameters(implClass).forEach {
+
+                // step 4 - For each parameter/class, get it’s annotation
+                val parameterClass = getClassFromParameter(it)
+
+                // step 5 - Validate according to respective layer
+                parameterClass?.annotations?.forEach {
+                    if (it.shortName.asString() != RepositoryAnnotation::class.simpleName) {
+                        throw java.lang.Exception("Verify $implClass parameters")
+                    }
+                }
+            }
+        }
     }
 
 }
