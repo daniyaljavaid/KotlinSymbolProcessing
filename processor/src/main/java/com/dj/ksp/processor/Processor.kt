@@ -48,17 +48,15 @@ internal class Processor(
             }.toSet()).isNotEmpty()
         }
 
-        /* step 3 & 4 - For each Implementation class, access it’s constructor parameters
-        For each parameter/class, get it’s annotation. */
 
-        implementationClasses.forEach {implClass ->
-            // class constructor params
+        // step 3 - For each Implementation class, access it’s constructor parameters
+        implementationClasses.forEach { implClass ->
             getConstructorParameters(implClass).forEach {
 
-                // convert params to KSClass
+                // step 4 - For each parameter/class, get it’s annotation
                 val parameterClass = getClassFromParameter(it)
 
-                // validation
+                // step 5 - Validate according to respective layer
                 parameterClass?.annotations?.forEach {
                     if (it.shortName.asString() != RepositoryAnnotation::class.simpleName) {
                         throw java.lang.Exception("Verify $implClass parameters")
@@ -75,6 +73,10 @@ internal class Processor(
             newLine()
             append(
                 "all viewmodel classes/interfaces $viewModelAnnotatedClasses"
+            )
+            newLine()
+            append(
+                "all viewmodel implementations $implementationClasses"
             )
             newLine()
             append("\"\"\"")
