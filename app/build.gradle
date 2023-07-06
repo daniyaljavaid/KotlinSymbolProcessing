@@ -54,4 +54,6 @@ dependencies {
     implementation project(path: ':annotation')
     ksp project(path: ':processor')
 
+    implementation 'javax.inject:javax.inject:1'
+
 }
