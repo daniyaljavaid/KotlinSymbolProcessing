@@ -24,12 +24,12 @@ internal class Processor(
     override fun process(resolver: Resolver): List<KSAnnotated> {
 
         //step1 - Find interfaces annotated with @CustomAnnotation
-        val viewModelAnnotatedClasses = getAnnotatedClasses(
+        val annotatedClasses = getAnnotatedClasses(
             resolver, UseCaseAnnotation::class.java.canonicalName
         )
 
-        if (viewModelAnnotatedClasses.any { it.classKind == ClassKind.INTERFACE }) {
-            validator(viewModelAnnotatedClasses)
+        if (annotatedClasses.any { it.classKind == ClassKind.INTERFACE }) {
+            validate(annotatedClasses)
         } else {
 
             //step 2 - For each interface, find Implementation classes
@@ -48,21 +48,21 @@ internal class Processor(
             val implementationClasses = declarations.filter {
                 it.superTypes.map {
                     it.toString()
-                }.toList().intersect(viewModelAnnotatedClasses.map {
+                }.toList().intersect(annotatedClasses.map {
                     it.toString()
                 }.toSet()).isNotEmpty()
             }
 
-
-            validator(implementationClasses)
+            validate(implementationClasses)
         }
+
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
             append("fun printHackFunction() = \"\"\"")
             newLine()
             append(
-                "all viewmodel classes/interfaces $viewModelAnnotatedClasses"
+                "all classes/interfaces $annotatedClasses"
             )
             newLine()
 //            append(
@@ -107,7 +107,7 @@ internal class Processor(
         return constructor.parameters
     }
 
-    private fun validator(implementationClasses: List<KSClassDeclaration>) {
+    private fun validate(implementationClasses: List<KSClassDeclaration>) {
         // step 3 - For each Implementation class, access it’s constructor parameters
         implementationClasses.forEach { implClass ->
             getConstructorParameters(implClass).forEach {
