@@ -6,15 +6,12 @@ import com.dj.ksp.extensions.getClassFromParameter
 import com.dj.ksp.extensions.getConstructorParameters
 import com.dj.ksp.extensions.newLine
 import com.dj.ksp.properties.AnnotationProperties
-import com.dj.testannotation.RepositoryAnnotation
-import com.dj.testannotation.UseCaseAnnotation
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSValueParameter
 
 internal class Processor(
     private val environment: SymbolProcessorEnvironment,
@@ -28,27 +25,31 @@ internal class Processor(
     override fun process(resolver: Resolver): List<KSAnnotated> {
         AnnotationProperties.values().forEach { annotation ->
             findAndValidateAnnotations(
-                resolver,
-                annotation = annotation.annotationName,
-                annotation.inclusions
+                resolver, annotation = annotation.annotationName, annotation.inclusions
             )
         }
         return emptyList()
     }
 
     private fun findAndValidateAnnotations(
-        resolver: Resolver,
-        annotation: String,
-        inclusions: List<String>
+        resolver: Resolver, annotation: String, inclusions: List<String>
     ) {
 
         //step1 - Find interfaces annotated with @CustomAnnotation
         val annotatedClasses = resolver.getAnnotatedClasses(
-            annotation//UseCaseAnnotation::class.java.canonicalName
+            annotation
         )
 
-        if (annotatedClasses.any { it.classKind == ClassKind.INTERFACE }) {
-            validate(annotatedClasses)
+        if (annotatedClasses.any { it.classKind != ClassKind.INTERFACE }) {
+            validate(annotatedClasses, inclusions)
+
+            generateFile(buildString {
+                newLine()
+                append(
+                    "all classes $annotatedClasses"
+                )
+                newLine()
+            })
         } else {
 
             //step 2 - For each interface, find Implementation classes
@@ -72,27 +73,34 @@ internal class Processor(
                 }.toSet()).isNotEmpty()
             }
 
-            validate(implementationClasses)
-        }
+            validate(implementationClasses, inclusions)
 
+            generateFile(buildString {
+                newLine()
+                append(
+                    "all interfaces $annotatedClasses"
+                )
+                newLine()
+                append(
+                    "all implementations $implementationClasses"
+                )
+                newLine()
+            })
+        }
+    }
+
+    private fun generateFile(
+        body: String
+    ) {
         val fileText = buildString {
             append("package $GENERATED_PACKAGE")
             newLine(2)
             append("fun printHackFunction() = \"\"\"")
-            newLine()
-            append(
-                "all classes/interfaces $annotatedClasses"
-            )
-            newLine()
-//            append(
-////                "all viewmodel implementations $implementationClasses"
-//            )
-            newLine()
+            append(body)
             append("\"\"\"")
             newLine()
         }
 
-        environment.logger.warn("PRINTED: \n\n$fileText")
         try {
             environment.createFileWithText(fileText)
         } catch (e: Exception) {
@@ -100,7 +108,9 @@ internal class Processor(
         }
     }
 
-    private fun validate(implementationClasses: List<KSClassDeclaration>) {
+    private fun validate(
+        implementationClasses: List<KSClassDeclaration>, inclusions: List<String>
+    ) {
         // step 3 - For each Implementation class, access it’s constructor parameters
         implementationClasses.forEach { implClass ->
             implClass.getConstructorParameters().forEach {
@@ -109,10 +119,12 @@ internal class Processor(
                 val parameterClass = it.getClassFromParameter()
 
                 // step 5 - Validate according to respective layer
-                parameterClass?.annotations?.forEach {
-                    if (it.shortName.asString() != RepositoryAnnotation::class.simpleName) {
-                        throw java.lang.Exception("Verify $implClass parameters")
-                    }
+                val annotations =
+                    parameterClass?.annotations?.toList()?.map { it.shortName.asString() }
+                        ?: listOf()
+
+                if (annotations.isEmpty() || annotations.intersect(inclusions).isEmpty()) {
+                    throw java.lang.Exception("$implClass must have parameters $inclusions")
                 }
             }
         }
