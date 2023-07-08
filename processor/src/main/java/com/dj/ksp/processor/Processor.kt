@@ -124,7 +124,10 @@ internal class Processor(
                         ?: listOf()
 
                 if (annotations.isEmpty() || annotations.intersect(inclusions).isEmpty()) {
-                    throw java.lang.Exception("$implClass must have parameters $inclusions")
+                    throw java.lang.Exception(
+                        "$implClass params are annotated with $annotations but" +
+                                " should have annotated with $inclusions"
+                    )
                 }
             }
         }

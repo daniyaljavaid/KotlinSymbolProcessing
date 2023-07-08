@@ -1,3 +1,5 @@
 package com.dj.ksp.usecase
 
-class UseCaseImpl : IUseCase
+import com.dj.ksp.repository.IRepository
+
+class UseCaseImpl(usecase: IUseCase2, repository: IRepository) : IUseCase

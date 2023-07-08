@@ -7,10 +7,10 @@ import com.dj.testannotation.RepositoryAnnotation
 import com.dj.testannotation.UseCaseAnnotation
 
 enum class AnnotationProperties(val annotationName: String, val inclusions: List<String>) {
-    LDS(
-        LDSAnnotation::class.java.canonicalName,
-        listOf("androidx.room.Dao")
-    ),
+//    LDS(
+//        LDSAnnotation::class.java.canonicalName,
+//        listOf("Dao")//"androidx.room.Dao"
+//    ),
 //    RDS(
 //        RDSAnnotation::class.java.canonicalName,
 //        listOf(ApiServiceAnnotation::class.java.simpleName)
@@ -19,13 +19,13 @@ enum class AnnotationProperties(val annotationName: String, val inclusions: List
 //        RepositoryAnnotation::class.java.canonicalName,
 //        listOf(LDSAnnotation::class.java.simpleName, RDSAnnotation::class.java.simpleName)
 //    ),
-//    USECASE(
-//        UseCaseAnnotation::class.java.canonicalName,
-//        listOf(
-//            RepositoryAnnotation::class.java.simpleName,
-//            UseCaseAnnotation::class.java.simpleName
-//        )
-//    ),
+    USECASE(
+        UseCaseAnnotation::class.java.canonicalName,
+        listOf(
+            RepositoryAnnotation::class.java.simpleName,
+            UseCaseAnnotation::class.java.simpleName
+        )
+    ),
 //    VIEWMODEL(
 //        "dagger.hilt.android.lifecycle.HiltViewModel",
 //        listOf(
