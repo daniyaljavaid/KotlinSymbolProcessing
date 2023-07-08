@@ -1,6 +1,6 @@
 package com.dj.ksp.viewmodel
 
-import com.dj.ksp.repository.IRepository
+import com.dj.ksp.usecase.IUseCase
 
-class ViewModel constructor(repository: IRepository, randomString: String, viewModel3: ViewModel3) :
+class ViewModel constructor(usecase: IUseCase) :
     IViewModel
