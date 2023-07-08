@@ -5,6 +5,7 @@ import com.dj.ksp.extensions.getAnnotatedClasses
 import com.dj.ksp.extensions.getClassFromParameter
 import com.dj.ksp.extensions.getConstructorParameters
 import com.dj.ksp.extensions.newLine
+import com.dj.ksp.properties.AnnotationProperties
 import com.dj.testannotation.RepositoryAnnotation
 import com.dj.testannotation.UseCaseAnnotation
 import com.google.devtools.ksp.processing.Resolver
@@ -25,10 +26,25 @@ internal class Processor(
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        AnnotationProperties.values().forEach { annotation ->
+            findAndValidateAnnotations(
+                resolver,
+                annotation = annotation.annotationName,
+                annotation.inclusions
+            )
+        }
+        return emptyList()
+    }
+
+    private fun findAndValidateAnnotations(
+        resolver: Resolver,
+        annotation: String,
+        inclusions: List<String>
+    ) {
 
         //step1 - Find interfaces annotated with @CustomAnnotation
         val annotatedClasses = resolver.getAnnotatedClasses(
-            UseCaseAnnotation::class.java.canonicalName
+            annotation//UseCaseAnnotation::class.java.canonicalName
         )
 
         if (annotatedClasses.any { it.classKind == ClassKind.INTERFACE }) {
@@ -82,9 +98,7 @@ internal class Processor(
         } catch (e: Exception) {
             environment.logger.warn("Exception")
         }
-        return emptyList()
     }
-
 
     private fun validate(implementationClasses: List<KSClassDeclaration>) {
         // step 3 - For each Implementation class, access it’s constructor parameters

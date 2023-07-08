@@ -6,7 +6,7 @@ import com.dj.testannotation.RDSAnnotation
 import com.dj.testannotation.RepositoryAnnotation
 import com.dj.testannotation.UseCaseAnnotation
 
-enum class AnnotationProperties(val annotation: String, val inclusions: List<String>) {
+enum class AnnotationProperties(val annotationName: String, val inclusions: List<String>) {
     LDS(
         LDSAnnotation::class.java.canonicalName,
         listOf("androidx.room.Dao")
