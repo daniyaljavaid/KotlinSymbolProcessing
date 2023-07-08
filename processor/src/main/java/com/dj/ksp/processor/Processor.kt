@@ -1,6 +1,9 @@
 package com.dj.ksp.processor
 
 import com.dj.ksp.extensions.createFileWithText
+import com.dj.ksp.extensions.getAnnotatedClasses
+import com.dj.ksp.extensions.getClassFromParameter
+import com.dj.ksp.extensions.getConstructorParameters
 import com.dj.ksp.extensions.newLine
 import com.dj.testannotation.RepositoryAnnotation
 import com.dj.testannotation.UseCaseAnnotation
@@ -24,8 +27,8 @@ internal class Processor(
     override fun process(resolver: Resolver): List<KSAnnotated> {
 
         //step1 - Find interfaces annotated with @CustomAnnotation
-        val annotatedClasses = getAnnotatedClasses(
-            resolver, UseCaseAnnotation::class.java.canonicalName
+        val annotatedClasses = resolver.getAnnotatedClasses(
+            UseCaseAnnotation::class.java.canonicalName
         )
 
         if (annotatedClasses.any { it.classKind == ClassKind.INTERFACE }) {
@@ -82,38 +85,14 @@ internal class Processor(
         return emptyList()
     }
 
-    private fun getClassFromParameter(parameter: KSValueParameter): KSClassDeclaration? {
-        val parameterType = parameter.type.resolve()
-        return parameterType.declaration as? KSClassDeclaration
-    }
-
-    private fun getAnnotatedClasses(
-        resolver: Resolver, annotationName: String
-    ): MutableList<KSClassDeclaration> {
-        val annotatedClasses = mutableListOf<KSClassDeclaration>()
-
-        val annotatedSymbols = resolver.getSymbolsWithAnnotation(annotationName)
-        for (symbol in annotatedSymbols) {
-            if (symbol is KSClassDeclaration) {
-                annotatedClasses.add(symbol)
-            }
-        }
-
-        return annotatedClasses
-    }
-
-    private fun getConstructorParameters(classDeclaration: KSClassDeclaration): List<KSValueParameter> {
-        val constructor = classDeclaration.primaryConstructor ?: return emptyList()
-        return constructor.parameters
-    }
 
     private fun validate(implementationClasses: List<KSClassDeclaration>) {
         // step 3 - For each Implementation class, access it’s constructor parameters
         implementationClasses.forEach { implClass ->
-            getConstructorParameters(implClass).forEach {
+            implClass.getConstructorParameters().forEach {
 
                 // step 4 - For each parameter/class, get it’s annotation
-                val parameterClass = getClassFromParameter(it)
+                val parameterClass = it.getClassFromParameter()
 
                 // step 5 - Validate according to respective layer
                 parameterClass?.annotations?.forEach {

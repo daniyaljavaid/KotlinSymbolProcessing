@@ -5,8 +5,7 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import kotlin.reflect.KClass
+import com.google.devtools.ksp.symbol.KSValueParameter
 
 fun StringBuilder.newLine(count: Int = 1) {
     repeat(count) {
@@ -28,17 +27,27 @@ fun SymbolProcessorEnvironment.createFileWithText(
     file.write(text.toByteArray())
 }
 
+fun KSClassDeclaration.getConstructorParameters(): List<KSValueParameter> {
+    val constructor = primaryConstructor ?: return emptyList()
+    return constructor.parameters
+}
 
-fun Resolver.findAnnotations(
-    kClass: KClass<*>,
-) = getSymbolsWithAnnotation(
-    kClass.qualifiedName.toString()
-)
-    .filterIsInstance<KSFunctionDeclaration>()
+fun KSValueParameter.getClassFromParameter(): KSClassDeclaration? {
+    val parameterType = type.resolve()
+    return parameterType.declaration as? KSClassDeclaration
+}
 
-fun Resolver.findClassAnnotations(
-    kClass: KClass<*>,
-) = getSymbolsWithAnnotation(
-    kClass.qualifiedName.toString()
-)
-    .filterIsInstance<KSClassDeclaration>()
+fun Resolver.getAnnotatedClasses(
+    annotationName: String
+): MutableList<KSClassDeclaration> {
+    val annotatedClasses = mutableListOf<KSClassDeclaration>()
+
+    val annotatedSymbols = getSymbolsWithAnnotation(annotationName)
+    for (symbol in annotatedSymbols) {
+        if (symbol is KSClassDeclaration) {
+            annotatedClasses.add(symbol)
+        }
+    }
+
+    return annotatedClasses
+}
