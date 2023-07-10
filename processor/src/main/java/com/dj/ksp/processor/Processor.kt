@@ -119,14 +119,16 @@ internal class Processor(
                 val parameterClass = it.getClassFromParameter()
 
                 // step 5 - Validate according to respective layer
-                val annotations =
-                    parameterClass?.annotations?.toList()?.map { it.shortName.asString() }
-                        ?: listOf()
+                val annotationsList =
+                    parameterClass?.annotations?.toMutableList() ?: mutableListOf()
+
+                annotationsList.addAll(it.annotations)
+
+                val annotations = annotationsList.map { it.shortName.asString() }
 
                 if (annotations.isEmpty() || annotations.intersect(inclusions).isEmpty()) {
                     throw java.lang.Exception(
-                        "$implClass params are annotated with $annotations but" +
-                                " should have annotated with $inclusions"
+                        "$implClass params are annotated with $annotations but should have annotated with $inclusions"
                     )
                 }
             }
