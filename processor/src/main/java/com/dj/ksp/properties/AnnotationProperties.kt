@@ -41,5 +41,11 @@ enum class AnnotationProperties(val annotationName: String, val inclusions: List
             UseCaseAnnotation::class.java.simpleName,
             GenericAnnotation::class.java.simpleName,
         )
+    ),
+    ACTIVITY_FRAGMENT(
+        "dagger.hilt.android.AndroidEntryPoint",
+        listOf(
+            "HiltViewModel"
+        )
     )
 }
