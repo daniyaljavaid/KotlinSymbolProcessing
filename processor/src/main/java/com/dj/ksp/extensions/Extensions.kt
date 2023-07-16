@@ -5,6 +5,7 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 
 fun StringBuilder.newLine(count: Int = 1) {
@@ -30,6 +31,13 @@ fun SymbolProcessorEnvironment.createFileWithText(
 fun KSClassDeclaration.getConstructorParameters(): List<KSValueParameter> {
     val constructor = primaryConstructor ?: return emptyList()
     return constructor.parameters
+}
+
+fun KSClassDeclaration.getAnnotatedClassVariables(): List<KSPropertyDeclaration> {
+    return this.getAllProperties().toList().filter {
+        it.annotations.toList().isNotEmpty()
+    }
+
 }
 
 fun KSValueParameter.getClassFromParameter(): KSClassDeclaration? {

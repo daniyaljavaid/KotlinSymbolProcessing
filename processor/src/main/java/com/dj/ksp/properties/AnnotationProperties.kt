@@ -11,7 +11,7 @@ import com.dj.testannotation.ViewModelAnnotation
 enum class AnnotationProperties(val annotationName: String, val inclusions: List<String>) {
     LDS(
         LDSAnnotation::class.java.canonicalName,
-        listOf("Dao")//"androidx.room.Dao"
+        listOf("Dao")
     ),
     RDS(
         RDSAnnotation::class.java.canonicalName,
@@ -36,7 +36,7 @@ enum class AnnotationProperties(val annotationName: String, val inclusions: List
         )
     ),
     VIEWMODEL(
-        "dagger.hilt.android.lifecycle.HiltViewModel", //"dagger.hilt.android.lifecycle.HiltViewModel",
+        "dagger.hilt.android.lifecycle.HiltViewModel",
         listOf(
             UseCaseAnnotation::class.java.simpleName,
             GenericAnnotation::class.java.simpleName,
@@ -45,6 +45,7 @@ enum class AnnotationProperties(val annotationName: String, val inclusions: List
     ACTIVITY_FRAGMENT(
         "dagger.hilt.android.AndroidEntryPoint",
         listOf(
+            ViewModelAnnotation::class.java.simpleName,
             "HiltViewModel"
         )
     )

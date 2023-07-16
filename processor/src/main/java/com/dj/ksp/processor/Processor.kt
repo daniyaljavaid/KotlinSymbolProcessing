@@ -3,6 +3,7 @@ package com.dj.ksp.processor
 import com.dj.ksp.extensions.createFileWithText
 import com.dj.ksp.extensions.getAnnotatedClasses
 import com.dj.ksp.extensions.getClassFromParameter
+import com.dj.ksp.extensions.getAnnotatedClassVariables
 import com.dj.ksp.extensions.getConstructorParameters
 import com.dj.ksp.extensions.newLine
 import com.dj.ksp.properties.AnnotationProperties
@@ -40,7 +41,10 @@ internal class Processor(
             annotation
         )
 
+        // check if it was a class or interface
         if (annotatedClasses.any { it.classKind != ClassKind.INTERFACE }) {
+            // for Class(Fragment/Activity/VM)
+
             validate(annotatedClasses, inclusions)
 
             generateFile(buildString {
@@ -51,7 +55,7 @@ internal class Processor(
                 newLine()
             })
         } else {
-
+            // for Interface
             //step 2 - For each interface, find Implementation classes
             val files = resolver.getAllFiles().toList()
 
@@ -113,9 +117,10 @@ internal class Processor(
     ) {
         // step 3 - For each Implementation class, access it’s constructor parameters
         implementationClasses.forEach { implClass ->
+            // get & validate each constructor parameter
             implClass.getConstructorParameters().forEach {
 
-                // step 4 - For each parameter/class, get it’s annotation
+                // step 4 - For each class, get it’s annotation
                 val parameterClass = it.getClassFromParameter()
 
                 // step 5 - Validate according to respective layer
@@ -125,6 +130,27 @@ internal class Processor(
                 annotationsList.addAll(it.annotations)
 
                 val annotations = annotationsList.map { it.shortName.asString() }
+
+                if (annotations.isEmpty() || annotations.intersect(inclusions).isEmpty()) {
+                    throw java.lang.Exception(
+                        "$implClass params are annotated with $annotations but should have annotated with $inclusions"
+                    )
+                }
+            }
+
+            // get & validate each class variable which is @Inject annotated
+            implClass.getAnnotatedClassVariables().filter {
+                it.annotations.toList().isNotEmpty()
+                        && (!it.annotations.toList()
+                    .map { it.shortName.toString() }.toList().contains("Inject"))
+            }.map {
+                it.type.resolve().declaration as KSClassDeclaration
+            }.forEach {
+
+                // step 4 - For each parameter/class, get it’s annotation
+                // step 5 - Validate according to respective layer
+                val annotations =
+                    it.annotations.toList().map { it.shortName.asString() }
 
                 if (annotations.isEmpty() || annotations.intersect(inclusions).isEmpty()) {
                     throw java.lang.Exception(
