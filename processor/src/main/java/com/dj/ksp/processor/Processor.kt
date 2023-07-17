@@ -147,14 +147,14 @@ internal class Processor(
                 it.type.resolve().declaration as KSClassDeclaration
             }.forEach {
 
-                // step 4 - For each parameter/class, get it’s annotation
+                // step 4 - For each class, get it’s annotation
                 // step 5 - Validate according to respective layer
                 val annotations =
                     it.annotations.toList().map { it.shortName.asString() }
 
                 if (annotations.isEmpty() || annotations.intersect(inclusions).isEmpty()) {
                     throw java.lang.Exception(
-                        "$implClass params are annotated with $annotations but should have annotated with $inclusions"
+                        "$implClass variables are annotated with $annotations but should have annotated with $inclusions"
                     )
                 }
             }
