@@ -40,12 +40,13 @@ internal class Processor(
         val annotatedClasses = resolver.getAnnotatedClasses(
             annotation
         )
+        val rootPackage = getRootPackage(annotatedClasses.firstOrNull()?.packageName?.asString())
 
         // check if it was a class or interface
         if (annotatedClasses.any { it.classKind != ClassKind.INTERFACE }) {
             // for Class(Fragment/Activity/VM)
 
-            validate(annotatedClasses, inclusions)
+            validate(annotatedClasses, inclusions, rootPackage)
 
             generateFile(buildString {
                 newLine()
@@ -77,7 +78,7 @@ internal class Processor(
                 }.toSet()).isNotEmpty()
             }
 
-            validate(implementationClasses, inclusions)
+            validate(implementationClasses, inclusions, rootPackage)
 
             generateFile(buildString {
                 newLine()
@@ -113,7 +114,9 @@ internal class Processor(
     }
 
     private fun validate(
-        implementationClasses: List<KSClassDeclaration>, inclusions: List<String>
+        implementationClasses: List<KSClassDeclaration>,
+        inclusions: List<String>,
+        appRootPackage: String?
     ) {
         // step 3 - For each Implementation class, access it’s constructor parameters
         implementationClasses.forEach { implClass ->
@@ -123,6 +126,10 @@ internal class Processor(
                 // step 4 - For each class, get it’s annotation
                 val parameterClass = it.getClassFromParameter()
 
+                val classRootPackage = getRootPackage(parameterClass?.packageName?.asString())
+                if (classRootPackage != appRootPackage) {
+                    return@forEach
+                }
                 // step 5 - Validate according to respective layer
                 val annotationsList =
                     parameterClass?.annotations?.toMutableList() ?: mutableListOf()
@@ -147,6 +154,10 @@ internal class Processor(
                 it.type.resolve().declaration as KSClassDeclaration
             }.forEach {
 
+                val classRootPackage = getRootPackage(it.packageName.asString())
+                if (classRootPackage != appRootPackage) {
+                    return@forEach
+                }
                 // step 4 - For each class, get it’s annotation
                 // step 5 - Validate according to respective layer
                 val annotations =
@@ -160,5 +171,9 @@ internal class Processor(
             }
         }
     }
+
+    private fun getRootPackage(filePath: String?) = filePath?.split(".")
+        ?.slice(IntRange(0, 2))?.joinToString(separator = ".")
+
 
 }
